@@ -65,6 +65,31 @@ Every finding was reviewed manually against the source code and given one verdic
 
 Each true positive is mapped to the **OWASP Top 10 (2025)**. Where Semgrep's category was wrong, the finding was reclassified. For example, several "NoSQL injection" findings target Sequelize models, which use parameterized queries; these were assessed for broken access control (IDOR) instead of injection.
 
+Helper scripts in `scripts/` generate the triage sheet (`semgrep_summary.py`), extract code context for review (`show_context.py`), and validate the final sheet (`finalize_triage.py`).
+
 ## Triage results
 
-TODO: (counts per verdict and per OWASP category).
+Of 92 raw findings, 25 were confirmed as true positives (27%).
+
+| Verdict | Count |
+|---|---|
+| True positive | 25 |
+| False positive | 32 |
+| Out of scope | 28 |
+| Duplicate | 3 |
+| Informational | 4 |
+
+One additional vulnerability was found by manual code review (MAN-001, a race condition in `likeProductReviews.ts`), which Semgrep did not detect.
+
+True positives by OWASP Top 10 (2025) category:
+
+| Category | Count |
+|---|---|
+| A01 Broken Access Control | 13 |
+| A05 Injection | 7 |
+| A04 Cryptographic Failures | 2 |
+| A07 Authentication Failures | 2 |
+| A02 Security Misconfiguration | 1 |
+| A06 Insecure Design (manual) | 1 |
+
+Key observation: 15 findings were reported by Semgrep as NoSQL injection. Manual review showed that most target Sequelize models, which use parameterized queries, so injection was not possible. Three were reclassified: two as broken access control (IDOR) and one confirmed as NoSQL operator injection on a MarsDB collection.
