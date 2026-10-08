@@ -55,7 +55,7 @@ Several DAST alerts independently confirm vulnerabilities identified in the sour
 | External Redirect | `/redirect` sent the browser to an attacker-controlled domain by embedding an allowed URL in its query string | SAST-069 (`routes/redirect.ts`) |
 | CORS Misconfiguration | `Access-Control-Allow-Origin: *` returned on 201 URLs | SAST-080 (`server.ts`) |
 
-ZAP also reported a finding SAST could not detect: **Bypassing 403**. Files under `/ftp` that return 403 Forbidden were served with 200 OK when the path was prefixed with `/%2e/`. This is a second bypass of the file server's access control (see SAST-058). Pending manual confirmation.
+ZAP's **Bypassing 403** and **Backup File Disclosure** alerts were investigated manually and found to be false positives. Requests such as `/%2e/ftp/package.json.bak` and `/ftp/quarantine.bak` return 200 OK, but the response body is the application's default HTML page, not the requested file. Note that browsers normalize `/%2e/` before sending the request, so this was verified with `curl --path-as-is`, which sends the path unchanged.
 
 ## Coverage limitations
 
@@ -64,6 +64,7 @@ ZAP also reported a finding SAST could not detect: **Bypassing 403**. Files unde
 - **Passive rule false negative.** ZAP's Directory Browsing check passed, although unauthenticated directory listing on `/ftp`, `/encryptionkeys` and `/support/logs` was confirmed manually. ZAP's rule recognizes Apache and IIS listing formats, not the format used by Express's `serve-index`.
 - **Application state.** The active scan creates users, reviews and other data. The application was reset before the remediation tests in Step 8.
 - **Local HTTP only.** The target runs locally without TLS. Transport-security alerts (e.g. HTTP Only Site) reflect the lab setup, not a production deployment.
+- **Single-page application fallback.** The server answers unknown paths with the application's HTML shell and a 200 OK status. Scanner rules that judge success by status code alone (backup file discovery, 403 bypass) therefore produce false positives, and each such alert must be verified by inspecting the response body.
 
 These limitations show why DAST and SAST are complementary: each phase found vulnerabilities the other could not.
 
